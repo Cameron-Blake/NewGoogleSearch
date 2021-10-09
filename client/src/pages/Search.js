@@ -1,63 +1,107 @@
-import React from "react";
-import Form from "../components/Form";
-import Results from "../components/Results";
+import React, { useState } from "react";
+import Input from "../components/Input";
+import Button from "../components/Button";
 import API from "../utils/API";
+import { BookList, BookListItem } from "../components/BookList";
+import { Container, Row, Col } from "../components/Grid";
 
-class Search extends React.Component {
-    state = {
-        value: "",
-        books: []
-    };
+function Search() {
 
-    componentDidMount() {
-        this.searchBook();
-    }
+  const [books, setBooks] = useState([]);
+  const [bookSearch, setBookSearch] = useState("");
 
-    makeBook = bookData => {
-        return {
-            _id: bookData.id,
-            title: bookData.volumeInfo.title,
-            authors: bookData.volumeInfo.authors,
-            description: bookData.volumeInfo.description,
-            image: bookData.volumeInfo.imageLinks.thumbnail,
-            link: bookData.volumeInfo.previewLink
-        }
-    }
+  const handleInputChange = event => {
+    const { value } = event.target;
+    setBookSearch(value);
+  };
 
-    searchBook = query => {
-        API.getBook(query)
-            .then(res => this.setState({ books: res.data.items.map(bookData => this.makeBook(bookData)) }))
-            .catch(err => console.error(err));
-    };
+  const handleFormSubmit = event => {
+    event.preventDefault();
+    API.getBooks(bookSearch)
+      .then( 
+        res =>{
+          console.log(res.data.items);
+          setBooks(res.data.items)
+        }) 
+      .catch(err => console.log(err));
+  };
 
-    handleInputChange = event => {
-        const name = event.target.name;
-        const value = event.target.value;
-        this.setState({
-            [name]: value
-        });
-    };
+  const handleSaveBook = event => {
+    event.preventDefault();
+    
+    API.saveBook({
+      id: books[event.target.id].id,
+      title: books[event.target.id].volumeInfo.title,
+      authors: books[event.target.id].volumeInfo.authors,
+      description: books[event.target.id].volumeInfo.description,
+      image: books[event.target.id].volumeInfo.imageLinks.thumbnail,
+      link: books[event.target.id].volumeInfo.link
+    })
+      .then(() => alert('Book saved!'))
+      .catch(err => console.log(err));
+  }
 
-    handleFormSubmit = event => {
-        event.preventDefault();
-        this.searchBook(this.state.search);
-    };
-
-    render() {
-        return (
-            <div>
-                <Form
-                    search={this.state.search}
-                    handleInputChange={this.handleInputChange}
-                    handleFormSubmit={this.handleFormSubmit}
-                />
-                <div className="container">
-                    <h2>Results</h2>
-                    <Results books={this.state.books} />
-                </div>
-            </div>
-        )
-    }
+  return (
+    <div>
+      <Container>
+        <Row>
+          <Col size="md-12">
+            <form>
+              <Container>
+                <Row>
+                  <Col size="xs-9 sm-10">
+                    <Input
+                      name="BookSearch"
+                      value={bookSearch}
+                      onChange={handleInputChange}
+                      placeholder="Search For a Book"
+                    />
+                  </Col>
+                  <Col size="xs-3 sm-2">
+                    <Button
+                      onClick={handleFormSubmit}
+                      size='lg'
+                      type="success"
+                      className="input-lg"
+                    >
+                        Search
+                    </Button>
+                  </Col>
+                </Row>
+              </Container>
+            </form>
+          </Col>
+        </Row>
+        <Row>
+          <Col size="xs-10">
+            {!books.length ? (
+              <h1 className="text-center">No Books to Display</h1>
+            ) : (
+              <BookList type={'Search Results:'}>
+                {books.map((book, index) => {
+                  return (
+                    <BookListItem
+                      key={book.id}
+                      title={book.volumeInfo.title}
+                      description={book.volumeInfo.description}
+                      link={book.volumeInfo.infoLink}
+                      authors={book.volumeInfo.authors}
+                      thumbnail={!book.volumeInfo.imageLinks ? (
+                        "http://books.google.com/books/content?id=llmymwEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+                      ) : (book.volumeInfo.imageLinks.thumbnail)} 
+                      index={index}
+                      onclick={handleSaveBook}
+                      btnName='Save Book'
+                    />
+                  )
+                })}
+              </BookList>
+            )}
+          </Col>
+        </Row>
+      </Container>
+    </div>
+  )
 }
 
 export default Search;

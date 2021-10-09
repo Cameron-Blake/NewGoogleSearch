@@ -1,26 +1,64 @@
-import React, { Component } from "react";
+import React, { useState, useEffect } from "react";
 import API from "../utils/API";
-import Results from "../components/Results";
+import { BookList, BookListItem } from "../components/BookList";
+import { Container, Row, Col } from "../components/Grid";
 
-class Saved extends Component {
-    state = {
-        savedBooks: [],
-    }
 
-    componentDidMount() {
-        API.savedBooks()
-            .then(savedBooks => this.setState({ savedBooks: savedBooks }))
-            .catch(err => console.error(err));
-    }
+function Saved() {
+  const [savedBooks, setSavedBooks] = useState([])
 
-    render() {
-        return (
-            <div className="container">
-                <h2>Saved books</h2>
-                <Results books={this.state.savedBooks} />
-            </div>
+  useEffect(() => {
+    loadBooks()
+  }, [])
+
+  function loadBooks() {
+    API.getSavedBooks()
+        .then(res => 
+        setSavedBooks(res.data)
         )
+        .catch(err => console.log(err));
+    };
+
+  const handleRemoveBook = event => {
+      event.preventDefault();
+
+      API.removeBook(event.target.id)
+        .then(res => loadBooks())
+        .catch(err => console.log(err));
     }
+
+
+  return (
+    <div>
+        <Container>
+            <Row>
+                <Col size="md-12">
+                    {!savedBooks.length ? (
+                        <h1 className="text-center">No Books to Display</h1>
+                    ) : (
+                        <BookList type='Saved Books:'>
+                            {savedBooks.map(book => {
+                                return ( 
+                                <BookListItem
+                                    key={book._id}
+                                    title={book.title}
+                                    description={book.description}
+                                    link={book.link}
+                                    authors={book.authors}
+                                    thumbnail={book.image}
+                                    index={book._id}
+                                    onclick={handleRemoveBook}
+                                    btnName='Remove'
+                                />
+                                );
+                            })}
+                        </BookList>
+                    )}
+                </Col>
+            </Row>
+      </Container>
+    </div>
+  )
 }
 
 export default Saved;
