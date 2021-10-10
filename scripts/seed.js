@@ -3,6 +3,9 @@ let db = require("../models");
 
 mongoose.connect("mongodb://localhost/googlebooks",{
     useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useCreateIndex: true,
+    useFindAndModify: false
 });
 
 const bookSeed = [
